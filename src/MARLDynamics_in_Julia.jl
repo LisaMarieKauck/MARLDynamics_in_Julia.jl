@@ -1,5 +1,9 @@
 module MARLDynamics_in_Julia
 
-# Write your package code here.
+include(Agents/ABase.jl)
+include(Agents/AStrategyBase.jl)
+include(Agents/AStrategyActorCritic.jl)
+
+
 
 end
