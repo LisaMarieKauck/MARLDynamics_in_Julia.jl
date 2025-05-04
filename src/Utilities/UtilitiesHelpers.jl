@@ -7,7 +7,7 @@ module UtilitiesHelpers
 using Revise
 using LinearAlgebra
 
-export make_variable_vector, compute_stationarydistribution
+export make_variable_vector, compute_stationarydistribution, OtherAgentsActionsSummationTensor
 
 function make_variable_vector(variable, len::Int)
     #"""Turn a `variable` into a vector or check that `length` is consistent."""  
@@ -45,6 +45,40 @@ function compute_stationarydistribution(Tkk::AbstractArray)
    
 end #of function
 
+function OtherAgentsActionsSummationTensor(N,M)
+    # to sum over the other agents and their respective actions using 'einsum'
+    dim = vcat(N, # agent i 
+            [N for _ in 1:(N-1)], #other agents
+            M, # action a of agent i
+            [M for _ in 1:N], # all acts
+            [M for _ in 1:(N-1)]) #other actions
+    Omega = zeros(Int64, Tuple(dim))
+
+    for index in CartesianIndices(size(Omega))
+        index = Tuple(index)
+        I = index[1]
+        notI = index[2 : N-1]
+        A = index[N-1]
+        allA = index[N : 2*N]
+        notA = index[2*N:end]
+
+        if length(unique(collect(Iterators.flatten((I, notI))))) == N
+            # all agents indices are different
+
+            if A == allA[I]
+                #action of agent i equals some other action
+                cd = allA[1:I] + allA[I+1:end] #other actions
+                areequal = [cd[k] == notA[k] for k in range(1, N-1)]
+                if all(areequal)
+                    index = CartesianIndex(index)
+                    Omega[index] = 1
+                end
+            end
+        end
+    end #of for loop
+    return Omega
+
+end #end of function
 
 end # end of module
 
